@@ -1,0 +1,12 @@
+# This is global git excludes file which is intended point to location configured core.excludesfile option.
+# You can check current value of it by running:
+# git config --get core.excludesfile
+.env
+
+# Vim backup, undo files
+*.orig
+*~
+
+# Vim swap files
+.*.swp
+.*.swo
