@@ -2,7 +2,6 @@ package ledger
 
 import (
 	"context"
-
 	// "github.com/deividaspetraitis/go/database"
 )
 

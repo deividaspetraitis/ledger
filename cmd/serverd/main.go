@@ -137,7 +137,7 @@ func run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 
 	cache := ledger.NewWithCache[*ledger.WalletAggregate](ledger.NewInMemory[*ledger.WalletAggregate](), func(id string) (*ledger.WalletAggregate, error) {
 		return ledger.GetWallet(ctx, func(ctx context.Context, aggregate es.Aggregate, id string) (*ledger.WalletAggregate, error) {
-			return eventdb.Get[*ledger.WalletAggregate](ctx, esclient, aggregate, id)
+			return readdb.GetWallet(ctx, sqldb, id)
 		}, id)
 	})
 

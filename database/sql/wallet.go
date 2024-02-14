@@ -86,8 +86,8 @@ func GetWallet(ctx context.Context, db *sql.DB, id string) (*ledger.WalletAggreg
 	}
 
 	aggregate, err := ledger.NewWallet(&ledger.CreateWalletRequest{
-		ID: wallet.ID,
-		Name: wallet.Name,
+		ID:      wallet.ID,
+		Name:    wallet.Name,
 		Balance: wallet.Balance,
 	})
 	if err != nil {

@@ -35,7 +35,6 @@ func Unmarshal[T any](t *asynq.Task) (T, error) {
 	return req, v.Validate()
 }
 
-
 // TODO
 func GetTask(ctx context.Context, asynqi *asynq.Inspector, id string) (*ledger.Task, error) {
 	info, err := asynqi.GetTaskInfo("default", id) // TODO: queue is hardcoded
