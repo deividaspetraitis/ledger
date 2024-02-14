@@ -12,7 +12,7 @@ import (
 )
 
 // createTransactionFunc decouples actual check implementation and allows easily test HTTP handler.
-type createTransactionFunc func(context.Context, *ledger.TransactionRequest) (*ledger.Wallet, error)
+type createTransactionFunc func(context.Context, *ledger.TransactionRequest) (string, error)
 
 // CreateTransaction handles HTTP requests for creating a new transaction.
 func CreateTransaction(createTransaction createTransactionFunc) http.HandlerFunc {
@@ -31,7 +31,7 @@ func CreateTransaction(createTransaction createTransactionFunc) http.HandlerFunc
 			return
 		}
 
-		_, err := createTransaction(r.Context(), request.Parse())
+		id, err := createTransaction(r.Context(), request.Parse())
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"handler": "transaction",
@@ -42,8 +42,8 @@ func CreateTransaction(createTransaction createTransactionFunc) http.HandlerFunc
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		if err := libhttp.Marshal(w, api.NewCreateTransactionResponse(&request)); err != nil {
+		w.WriteHeader(http.StatusAccepted)
+		if err := libhttp.Marshal(w, api.NewCreateTaskResponse(id)); err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"handler": "transaction",
 				"method":  "CreateTransaction",

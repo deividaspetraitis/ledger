@@ -20,8 +20,8 @@ const (
 
 // Deposit represents wallet deposit transaction event.
 type Deposit struct {
-	WalletID string
-	Amount   int
+	WalletID string `json:"WalletID"`
+	Amount   int    `json:"Amount"`
 }
 
 // Implements es.MarshalUnmarshaler
@@ -44,8 +44,8 @@ func (d *Deposit) MarshalJSON() ([]byte, error) {
 
 // Withdraw represents wallet deposit transaction event.
 type Withdraw struct {
-	WalletID string
-	Amount   int
+	WalletID string `json:"WalletID"`
+	Amount   int    `json:"Amount"`
 }
 
 // Implements es.MarshalUnmarshaler

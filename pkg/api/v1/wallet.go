@@ -9,6 +9,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO
+type Request[T any] interface {
+	UnmarshalHTTPRequest(req *http.Request) error
+	Parse() T
+}
+
 // Wallet represents API response Wallet entity.
 type Wallet struct {
 	ID      string `json:"id"`
@@ -46,6 +52,9 @@ func (r *CreateWalletRequest) Validate() error {
 
 // UnmarshalHTTP implements http.RequestUnmarshaler.
 func (r *CreateWalletRequest) UnmarshalHTTPRequest(req *http.Request) error {
+	if r == nil {
+		r = &CreateWalletRequest{}
+	}
 	decoder := json.NewDecoder(req.Body)
 	if err := decoder.Decode(&r); err != nil {
 		return err

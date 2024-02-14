@@ -16,8 +16,12 @@ var ErrConfigNotFound = errors.New("config file were not found")
 
 // Config represents application configuration.
 type Config struct {
-	HTTP     *http.Config     `mapstructure:"http"` // HTTP server config.
-	Database *database.Config `mapstructure:"db"`   // Database instance config.
+	HTTP     *http.Config `mapstructure:"http"` // HTTP server config.
+	Database struct {
+		EventStore *database.Config `mapstructure:"eventstore"` // Events database instance config
+		Redis      *database.Config `mapstructure:"redis"`      // Redis database instance config
+		Postgres   *database.Config `mapstructure:"postgres"`   // Query database instance config
+	} `mapstructure:"db"`
 }
 
 // New accepts constructs a new Config by reading env configuration file.
