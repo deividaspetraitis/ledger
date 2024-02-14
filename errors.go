@@ -7,8 +7,10 @@ var (
 	ErrEntryNotFound = errors.New("entry not found")
 
 	ErrNotValidWalletName = errors.New("given wallet name is not a valid name")
-	ErrNotValidWalletID   = errors.New("given wallet name is not a valid ID")
+	ErrNotValidWalletID   = errors.New("given wallet id is not a valid ID")
 
 	ErrNotValidTransaction = errors.New("given transaction type is not available")
 	ErrNotValidAmount      = errors.New("given transaction amount is not valid")
+
+	ErrNotValidTaskID = errors.New("given task id is not a valid ID")
 )

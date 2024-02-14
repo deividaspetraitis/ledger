@@ -27,7 +27,9 @@ func init() {
 
 // CreateWalletRequest represents a request for creating a new wallet.
 type CreateWalletRequest struct {
-	Name string
+	ID      string // Unique wallet identifier
+	Name    string // Wallet name
+	Balance int    // Wallet balance in cents
 }
 
 // Validate implements validator.Validator.
@@ -68,14 +70,15 @@ func NewWallet(req *CreateWalletRequest) (*WalletAggregate, error) {
 		return nil, err
 	}
 
+	if len(req.ID) == 0 {
+		req.ID = newID()
+	}
+
 	var aggregate WalletAggregate
-
-	id := newID()
-
-	err := (&aggregate).Apply(es.NewEvent(id, &aggregate, &WalletInitialized{
-		ID:      id,
+	err := (&aggregate).Apply(es.NewEvent(req.ID, &aggregate, &WalletInitialized{
+		ID:      req.ID,
 		Name:    req.Name,
-		Balance: 0,
+		Balance: req.Balance,
 	}))
 	if err != nil {
 		return nil, err
@@ -200,10 +203,10 @@ func CreateWallet(ctx context.Context, saveAggregate database.SaveAggregateFunc,
 
 // GetWallet retrieves existing wallet based on given wallet ID.
 // If Wallet does not exist in the system database.ErrEntityNotFound will be returned.
-func GetWallet(ctx context.Context, getWallet database.GetAggregateFunc[*WalletAggregate], id string) (*Wallet, error) {
+func GetWallet(ctx context.Context, getWallet database.GetAggregateFunc[*WalletAggregate], id string) (*WalletAggregate, error) {
 	wallet, err := getWallet(ctx, &WalletAggregate{}, id)
 	if err != nil {
 		return nil, err
 	}
-	return &wallet.Wallet, nil
+	return wallet, nil
 }

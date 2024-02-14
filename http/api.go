@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/deividaspetraitis/ledger"
-	db "github.com/deividaspetraitis/ledger/database/esdb"
+	taskdb "github.com/deividaspetraitis/ledger/database/asynq"
 
 	"github.com/deividaspetraitis/go/database/esdb"
 	"github.com/deividaspetraitis/go/es"
@@ -14,10 +14,11 @@ import (
 	"github.com/deividaspetraitis/go/log"
 
 	"github.com/gorilla/mux"
+	"github.com/hibiken/asynq"
 )
 
 // API constructs an http.Handler with all application routes defined.
-func API(shutdown chan os.Signal, cfg *Config, logger log.Logger, esclient *esdb.Client) http.Handler {
+func API(shutdown chan os.Signal, cfg *Config, logger log.Logger, esclient *esdb.Client, asynqc *asynq.Client, asynqi *asynq.Inspector, cache *ledger.WithCache[*ledger.WalletAggregate]) http.Handler {
 	// =========================================================================
 	// Construct the web app api which holds all routes as well as common Middleware.
 
@@ -27,27 +28,29 @@ func API(shutdown chan os.Signal, cfg *Config, logger log.Logger, esclient *esdb
 	// Construct and attach relevant handlers to web app api
 
 	// POST /wallet creates a wallet.
-	api.API.HandleFunc("/wallets", CreateWallet(func(ctx context.Context, req *ledger.CreateWalletRequest) (*ledger.Wallet, error) {
-		return ledger.CreateWallet(ctx, func(ctx context.Context, aggregate es.Aggregate) error {
-			return db.Save(ctx, esclient, aggregate)
-		}, req)
+	api.API.HandleFunc("/wallets", CreateWallet(func(ctx context.Context, req *ledger.CreateWalletRequest) (string, error) {
+		return taskdb.ScheduleCreateWalletTask(ctx, asynqc, req)
 	})).Methods(http.MethodPost)
 
 	// GET /wallet/{id} retrieves a wallet.
 	api.API.HandleFunc("/wallets/{id}", GetWallet(func(ctx context.Context, id string) (*ledger.Wallet, error) {
-		return ledger.GetWallet(ctx, func(ctx context.Context, aggregate es.Aggregate, id string) (*ledger.WalletAggregate, error) {
-			return db.Get[*ledger.WalletAggregate](ctx, esclient, aggregate, id)
+		aggregate, err := ledger.GetWallet(ctx, func(ctx context.Context, aggregate es.Aggregate, id string) (*ledger.WalletAggregate, error) {
+			return cache.Get(id)
 		}, id)
+		return &aggregate.Wallet, err
 	})).Methods(http.MethodGet)
 
 	// POST /transactions creates a new transaction.
-	api.API.HandleFunc("/transactions", CreateTransaction(func(ctx context.Context, req *ledger.TransactionRequest) (*ledger.Wallet, error) {
-		return ledger.CreateTransaction(ctx, func(ctx context.Context, aggregate es.Aggregate) error {
-			return db.Save(ctx, esclient, aggregate)
-		}, func(ctx context.Context, aggregate es.Aggregate, id string) (*ledger.WalletAggregate, error) {
-			return db.Get[*ledger.WalletAggregate](ctx, esclient, aggregate, id)
-		}, req)
+	api.API.HandleFunc("/transactions", CreateTransaction(func(ctx context.Context, req *ledger.TransactionRequest) (string, error) {
+		return taskdb.ScheduleCreateTransactionTask(ctx, asynqc, req)
 	})).Methods(http.MethodPost)
+
+	// GET /jobs/{id} retrieves a job status.
+	api.API.HandleFunc("/tasks/{id}", GetTask(func(ctx context.Context, id string) (*ledger.Task, error) {
+		return ledger.GetTask(ctx, func(ctx context.Context, id string) (*ledger.Task, error) {
+			return taskdb.GetTask(ctx, asynqi, id)
+		}, id)
+	})).Methods(http.MethodGet)
 
 	router := mux.NewRouter()
 

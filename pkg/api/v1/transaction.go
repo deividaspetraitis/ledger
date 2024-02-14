@@ -45,11 +45,13 @@ func (r *CreateTransactionRequest) Parse() *ledger.TransactionRequest {
 
 // UnmarshalHTTP implements http.RequestUnmarshaler.
 func (r *CreateTransactionRequest) UnmarshalHTTPRequest(req *http.Request) error {
+	if r == nil {
+		r = &CreateTransactionRequest{}
+	}
 	decoder := json.NewDecoder(req.Body)
 	if err := decoder.Decode(&r); err != nil {
 		return err
 	}
-
 	return r.Validate()
 }
 

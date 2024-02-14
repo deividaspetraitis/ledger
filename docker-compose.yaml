@@ -1,6 +1,6 @@
 version: '3'
 services:
-  eventstore.db:
+  db.eventstore:
       image: eventstore/eventstore:23.10.0-bookworm-slim
       environment:
         - EVENTSTORE_CLUSTER_SIZE=1
@@ -21,6 +21,38 @@ services:
         - type: volume
           source: eventstore-volume-logs
           target: /var/log/eventstore
+      profiles: 
+        - full
+        - dev
+  db.postgres:
+    image: postgres:16.2-alpine
+    environment:
+      - POSTGRES_USER=${DB_POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${DB_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${DB_POSTGRES_DATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - "postgresql-volume-data:/var/lib/postgresql/data"
+      - "./healthchecks:/healthchecks"
+    healthcheck:
+      test: /healthchecks/postgres.sh
+      interval: "5s"
+    profiles: 
+      - full
+      - dev
+  redis:
+    image: redis:7.2.4-alpine
+    volumes:
+      - "./healthchecks:/healthchecks"
+    healthcheck:
+      test: /healthchecks/redis.sh
+      interval: "5s"
+    ports:
+      - "6379:6379"
+    profiles: 
+      - full
+      - dev
   ledgerd:
     build:
       dockerfile: ./Dockerfile
@@ -34,7 +66,21 @@ services:
     ports:
       - "80:8000"
     depends_on:
-      - eventstore.db
+      # eventstore.db
+      redis:
+        condition: service_healthy 
+    profiles: 
+      - full
+  adminer:
+    image: adminer:4.8.1-standalone
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on: 
+      - db.postgres
+    profiles: 
+      - dev
 volumes:
+  postgresql-volume-data:
   eventstore-volume-data:
   eventstore-volume-logs:

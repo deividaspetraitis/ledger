@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS wallets (
+   id VARCHAR (50) PRIMARY KEY,
+   name VARCHAR (50) NOT NULL,
+   balance BIGINT NOT NULL,
+   version BIGINT NOT NULL
+);
